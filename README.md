@@ -33,15 +33,15 @@ repos pull a warm base instead of rebuilding one:
 
 | Image | Contents |
 |-------|----------|
-| `ghcr.io/johndoe6345789/metabuilder-base-apt` | `ubuntu:24.04` + every apt package used across the platform |
-| `ghcr.io/johndoe6345789/metabuilder-base-conan-cli` | the above + Conan 2 + the CLI's C++ dependencies |
-| `ghcr.io/johndoe6345789/metabuilder-base-node-deps` | `node:24` + the whole npm workspace installed |
+| `ghcr.io/johndoe6345789/deployment/base-apt` | `ubuntu:24.04` + every apt package used across the platform |
+| `ghcr.io/johndoe6345789/deployment/base-conan-cli` | the above + Conan 2 + the CLI's C++ dependencies |
+| `ghcr.io/johndoe6345789/deployment/base-node-deps` | `node:24` + the whole npm workspace installed |
 
 Consumers pull and retag to the name the app Dockerfiles expect:
 
 ```bash
-docker pull ghcr.io/johndoe6345789/metabuilder-base-apt:latest
-docker tag  ghcr.io/johndoe6345789/metabuilder-base-apt:latest \
+docker pull ghcr.io/johndoe6345789/deployment/base-apt:latest
+docker tag  ghcr.io/johndoe6345789/deployment/base-apt:latest \
             metabuilder/base-apt:latest
 ```
 

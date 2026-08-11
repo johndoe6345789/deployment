@@ -5,8 +5,8 @@ name: base-images
 # rebuilding one. Consumers retag locally to the name the app Dockerfiles
 # expect:
 #
-#   docker pull ghcr.io/johndoe6345789/metabuilder-base-apt:latest
-#   docker tag  ghcr.io/johndoe6345789/metabuilder-base-apt:latest \
+#   docker pull ghcr.io/johndoe6345789/deployment/base-apt:latest
+#   docker tag  ghcr.io/johndoe6345789/deployment/base-apt:latest \
 #               metabuilder/base-apt:latest
 #
 # Published here:
@@ -91,7 +91,7 @@ jobs:
             runner: ubuntu-24.04-arm
 
     env:
-      IMAGE: ghcr.io/johndoe6345789/metabuilder-base-apt
+      IMAGE: ghcr.io/johndoe6345789/deployment/base-apt
       ARCH: ${{ matrix.arch }}
       SHA: ${{ github.sha }}
 
@@ -147,7 +147,7 @@ jobs:
             runner: ubuntu-24.04-arm
 
     env:
-      IMAGE: ghcr.io/johndoe6345789/metabuilder-base-node-deps
+      IMAGE: ghcr.io/johndoe6345789/deployment/base-node-deps
       ARCH: ${{ matrix.arch }}
       SHA: ${{ github.sha }}
 
@@ -252,8 +252,8 @@ jobs:
             runner: ubuntu-24.04-arm
 
     env:
-      IMAGE: ghcr.io/johndoe6345789/metabuilder-base-conan-cli
-      PARENT: ghcr.io/johndoe6345789/metabuilder-base-apt
+      IMAGE: ghcr.io/johndoe6345789/deployment/base-conan-cli
+      PARENT: ghcr.io/johndoe6345789/deployment/base-apt
       ARCH: ${{ matrix.arch }}
       SHA: ${{ github.sha }}
 
@@ -319,7 +319,7 @@ jobs:
         base: [apt, node-deps, conan-cli]
 
     env:
-      IMAGE: ghcr.io/johndoe6345789/metabuilder-base-${{ matrix.base }}
+      IMAGE: ghcr.io/johndoe6345789/deployment/base-${{ matrix.base }}
       SHA: ${{ github.sha }}
 
     steps:
@@ -350,7 +350,7 @@ jobs:
       - name: Summarise
         run: |
           {
-            echo "### metabuilder-base-${{ matrix.base }}"
+            echo "### deployment/base-${{ matrix.base }}"
             echo
             echo '```'
             echo "docker pull $IMAGE:latest"
