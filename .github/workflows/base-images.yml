@@ -126,8 +126,19 @@ jobs:
             g++ --version | head -1
           '
 
+      # Retried because GHCR intermittently answers a blob upload with
+      # "unknown blob", which killed node-deps (arm64) while its amd64 twin —
+      # pushing to the same package seconds earlier — succeeded. It is a
+      # registry-side transient, so the retry is the fix rather than a mask.
       - name: Push
-        run: docker push "$IMAGE:${SHA}-${ARCH}"
+        run: |
+          for attempt in 1 2 3; do
+            docker push "$IMAGE:${SHA}-${ARCH}" && exit 0
+            echo "push attempt ${attempt} failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          echo "::error::docker push failed after 3 attempts"
+          exit 1
 
   # ---------------------------------------------------------------------------
   # base-node-deps — needs metabuilder's workspace, not base-apt.
@@ -230,8 +241,19 @@ jobs:
           fi
           echo "no credentials in the image .npmrc"
 
+      # Retried because GHCR intermittently answers a blob upload with
+      # "unknown blob", which killed node-deps (arm64) while its amd64 twin —
+      # pushing to the same package seconds earlier — succeeded. It is a
+      # registry-side transient, so the retry is the fix rather than a mask.
       - name: Push
-        run: docker push "$IMAGE:${SHA}-${ARCH}"
+        run: |
+          for attempt in 1 2 3; do
+            docker push "$IMAGE:${SHA}-${ARCH}" && exit 0
+            echo "push attempt ${attempt} failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          echo "::error::docker push failed after 3 attempts"
+          exit 1
 
   # ---------------------------------------------------------------------------
   # base-conan-cli — FROM base-apt, and COPYs metabuilder's cli conanfile.
@@ -301,8 +323,19 @@ jobs:
             conan list "*" 2>/dev/null | tail -20
           '
 
+      # Retried because GHCR intermittently answers a blob upload with
+      # "unknown blob", which killed node-deps (arm64) while its amd64 twin —
+      # pushing to the same package seconds earlier — succeeded. It is a
+      # registry-side transient, so the retry is the fix rather than a mask.
       - name: Push
-        run: docker push "$IMAGE:${SHA}-${ARCH}"
+        run: |
+          for attempt in 1 2 3; do
+            docker push "$IMAGE:${SHA}-${ARCH}" && exit 0
+            echo "push attempt ${attempt} failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          echo "::error::docker push failed after 3 attempts"
+          exit 1
 
   # ---------------------------------------------------------------------------
   # Join each per-arch pair into one multi-arch tag consumers can pull.
