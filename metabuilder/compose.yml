@@ -1413,7 +1413,6 @@ services:
     # needs sources from two repos at once (or one that is not
     # identifiable); run the image already on the host.
     image: metabuilder-deploy-nginx-stream:latest
-    image: metabuilder-deploy-nginx-stream:latest
     container_name: metabuilder-nginx-stream
     restart: unless-stopped
     profiles: [media]
