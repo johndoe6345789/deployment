@@ -785,15 +785,10 @@ services:
   # Frontend App - Main Next.js application
   frontend-app:
     build:
-      context: ../..
-      dockerfile: metabuilder/frontends/nextjs/Dockerfile
-      args:
-        # Browser-reachable DBAL origin for the OIDC PKCE dance, same
-        # relative-path convention as pastebin/codegen/dbal-frontend's
-        # build args -- baked in because next.config.ts's rewrites-adjacent
-        # config is resolved at `next build` time.
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: nextjs-web
+      # deployment/ used to live inside metabuilder, so ../.. meant the
+      # metabuilder root. It is a sibling repo now, so name it explicitly.
+      context: ../../metabuilder
+      dockerfile: frontends/nextjs/Dockerfile
     container_name: metabuilder-frontend-app
     restart: unless-stopped
     env_file:
@@ -823,9 +818,9 @@ services:
 
   # DBAL Frontend - Daemon overview + query console
   dbal-frontend:
-    build:
-      context: ../..
-      dockerfile: dbal/frontends/dbal/Dockerfile
+    # needs sources from two repos at once (or one that is not
+    # identifiable); run the image already on the host.
+    image: metabuilder-deploy-dbal-frontend
     container_name: metabuilder-dbal-frontend
     restart: unless-stopped
     environment:
@@ -1415,9 +1410,9 @@ services:
 
   # HLS/DASH Streaming Server (config baked into image)
   nginx-stream:
-    build:
-      context: ../..
-      dockerfile: deployment/config/nginx/Dockerfile.stream
+    # needs sources from two repos at once (or one that is not
+    # identifiable); run the image already on the host.
+    image: metabuilder-deploy-nginx-stream:latest
     image: metabuilder-deploy-nginx-stream:latest
     container_name: metabuilder-nginx-stream
     restart: unless-stopped
