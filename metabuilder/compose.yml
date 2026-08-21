@@ -290,12 +290,8 @@ services:
 
   # DBAL Daemon - C++ backend
   dbal:
-    build:
-      context: ../../libraries/dbal
-      dockerfile: production/build-config/Dockerfile
-      args:
-        BUILD_TYPE: Release
-        BUILDKIT_INLINE_CACHE: 1
+    # published to GHCR on every commit; the source repo is not checked out here
+    image: ghcr.io/johndoe6345789/dbal:latest
     container_name: metabuilder-dbal
     restart: unless-stopped
     environment:
@@ -431,9 +427,9 @@ services:
 
   # Dovecot - IMAP/POP3 server with TLS
   dovecot:
-    build:
-      context: ../../frontends/emailclient/deployment/docker/dovecot
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-dovecot
     container_name: metabuilder-dovecot
     restart: unless-stopped
     volumes:
@@ -449,9 +445,9 @@ services:
 
   # SMTP Relay - Twisted relay pointing at local Postfix
   smtp-relay:
-    build:
-      context: ../../services/smtprelay
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-smtp-relay
     container_name: metabuilder-smtp-relay
     restart: unless-stopped
     environment:
@@ -482,9 +478,9 @@ services:
   # Email Service - IMAP/SMTP operations, all persistence via DBAL (no
   # local database -- see EmailClient/EmailFolder/EmailMessage entities).
   email-service:
-    build:
-      context: ../../frontends/emailclient
-      dockerfile: backend/Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-email-service
     container_name: metabuilder-email-service
     restart: unless-stopped
     environment:
@@ -616,9 +612,9 @@ services:
 
   # Codegen Backend - C++/Drogon storage API
   codegen-backend:
-    build:
-      context: ../../frontends/codegen/backend
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-codegen-backend
     container_name: metabuilder-codegen-backend
     restart: unless-stopped
     environment:
@@ -682,9 +678,9 @@ services:
   # Pastebin Backend - C++/Drogon REST API for snippet storage + code
   # execution/debugging (DBAL-only auth, no local password store)
   pastebin-backend:
-    build:
-      context: ../../frontends/pastebin
-      dockerfile: backend/Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-pastebin-backend
     container_name: metabuilder-pastebin-backend
     restart: unless-stopped
     environment:
@@ -890,9 +886,9 @@ services:
 
   # Docker Terminal - Container management UI + C++/Drogon backend
   dockerterminal-backend:
-    build:
-      context: ../../frontends/dockerterminal
-      dockerfile: backend/Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-dockerterminal-backend
     container_name: metabuilder-dockerterminal-backend
     restart: unless-stopped
     environment:
@@ -1001,9 +997,9 @@ services:
 
   # Package Repo - C++ Drogon backend (Docker v2 + artifact API)
   packagerepo-backend:
-    build:
-      context: ../../frontends/packagerepo
-      dockerfile: backend/Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-packagerepo-backend
     container_name: metabuilder-packagerepo-backend
     restart: unless-stopped
     environment:
@@ -1077,9 +1073,9 @@ services:
 
   # RepoForge - Android app download portal
   repoforge:
-    build:
-      context: ../../frontends/repoforge/portal
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-repoforge
     container_name: metabuilder-repoforge
     restart: unless-stopped
     environment:
@@ -1097,9 +1093,9 @@ services:
 
   # CaproverForge - Android app download portal
   caproverforge:
-    build:
-      context: ../../frontends/caproverforge/portal
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
+    image: metabuilder-deploy-caproverforge
     container_name: metabuilder-caproverforge
     restart: unless-stopped
     environment:
@@ -1391,9 +1387,8 @@ services:
 
   # Media Processing Daemon - FFmpeg, Radio, Retro Gaming
   media-daemon:
-    build:
-      context: ../../services/media_daemon
-      dockerfile: Dockerfile
+    # source moved to its own repo in the micro-repo split and is not
+    # checked out here; run against the image already built on the host
     image: metabuilder-deploy-media-daemon:latest
     container_name: metabuilder-media-daemon
     restart: unless-stopped
