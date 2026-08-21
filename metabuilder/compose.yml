@@ -379,13 +379,10 @@ services:
 
   # WorkflowUI - Visual workflow editor (n8n-style)
   workflowui:
-    build:
-      context: ../..
-      dockerfile: frontends/workflowui/Dockerfile
-      args:
-        NODE_ENV: production
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: workflowui-web
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-workflowui
     container_name: metabuilder-workflowui
     restart: unless-stopped
     environment:
@@ -541,25 +538,10 @@ services:
 
   # CodeForge IDE - Next.js + Monaco code editor
   codegen:
-    build:
-      context: ../..
-      dockerfile: frontends/codegen/Dockerfile
-      args:
-        NEXT_PUBLIC_AI_ENABLED: ${NEXT_PUBLIC_AI_ENABLED:-true}
-        # Browser-reachable DBAL origin for the OIDC PKCE dance, same
-        # same-origin-relative convention as pastebin/dbal-frontend's build args.
-        # NEXT_PUBLIC_* vars are compiled into the client bundle at build time --
-        # setting them under `environment:` below would have no effect on
-        # client-side code, only build `args:` does.
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: codegen-web
-        NEXT_PUBLIC_DBAL_API_URL: /api/dbal
-        NEXT_PUBLIC_DBAL_TENANT: codegen
-        # Server-only -- baked at build time because next.config.js's
-        # rewrites() destination is frozen into routes-manifest.json by
-        # `next build`; setting this under `environment:` alone (runtime)
-        # has no effect on the standalone server's proxy target.
-        FLASK_BACKEND_URL: http://codegen-backend:5001
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-codegen
     container_name: metabuilder-codegen
     restart: unless-stopped
     environment:
@@ -641,19 +623,10 @@ services:
 
   # Pastebin - Code snippet sharing
   pastebin:
-    build:
-      context: ../..
-      dockerfile: frontends/pastebin/Dockerfile
-      args:
-        # Browser-reachable DBAL origin — relative, same-origin path (matches
-        # NEXT_PUBLIC_DBAL_API_URL/NEXT_PUBLIC_FLASK_BACKEND_URL's convention
-        # below), since this deployment has no fixed external hostname.
-        # nginx's /api/dbal/ location strips the prefix and forwards to the
-        # dbal container, so /api/dbal/oidc/authorize reaches DBAL's
-        # /oidc/authorize correctly regardless of what host/port the browser
-        # is actually on.
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: pastebin-web
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-pastebin
     container_name: metabuilder-pastebin
     restart: unless-stopped
     environment:
@@ -716,12 +689,10 @@ services:
 
   # Postgres Dashboard - Database admin
   postgres-dashboard:
-    build:
-      context: ../..
-      dockerfile: frontends/postgres/Dockerfile
-      args:
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: postgres-dashboard-web
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-postgres-dashboard
     container_name: metabuilder-postgres-dashboard
     restart: unless-stopped
     environment:
@@ -751,9 +722,10 @@ services:
 
   # Email Client - Email management UI
   emailclient-app:
-    build:
-      context: ../..
-      dockerfile: frontends/emailclient/Dockerfile
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-emailclient-app
     container_name: metabuilder-emailclient-app
     restart: unless-stopped
     environment:
@@ -774,9 +746,10 @@ services:
 
   # Exploded Diagrams - Interactive 3D viewer
   exploded-diagrams:
-    build:
-      context: ../..
-      dockerfile: frontends/exploded-diagrams/Dockerfile
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-exploded-diagrams
     container_name: metabuilder-exploded-diagrams
     restart: unless-stopped
     environment:
@@ -795,9 +768,9 @@ services:
   # Storybook - Component library
   storybook:
     profiles: ["storybook"]
-    build:
-      context: ../..
-      dockerfile: frontends/storybook/Dockerfile
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split. Run the image already on the host.
+    image: metabuilder-deploy-storybook
     container_name: metabuilder-storybook
     restart: unless-stopped
     healthcheck:
@@ -813,7 +786,7 @@ services:
   frontend-app:
     build:
       context: ../..
-      dockerfile: frontends/nextjs/Dockerfile
+      dockerfile: metabuilder/frontends/nextjs/Dockerfile
       args:
         # Browser-reachable DBAL origin for the OIDC PKCE dance, same
         # relative-path convention as pastebin/codegen/dbal-frontend's
@@ -850,15 +823,10 @@ services:
 
   # DBAL Frontend - Daemon overview + query console
   dbal-frontend:
-    build:
-      context: ../..
-      dockerfile: frontends/dbal/Dockerfile
-      args:
-        DBAL_DAEMON_URL: http://dbal:8080
-        # Browser-reachable DBAL origin for the OIDC PKCE dance, same
-        # same-origin-relative convention as pastebin's build args above.
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: dbal-console
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-dbal-frontend
     container_name: metabuilder-dbal-frontend
     restart: unless-stopped
     environment:
@@ -911,13 +879,10 @@ services:
       - metabuilder
 
   dockerterminal:
-    build:
-      context: ../..
-      dockerfile: frontends/dockerterminal/frontend/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: /terminal-api
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: dockerterminal-web
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-dockerterminal
     container_name: metabuilder-dockerterminal
     restart: unless-stopped
     environment:
@@ -1047,13 +1012,10 @@ services:
       - metabuilder
 
   packagerepo:
-    build:
-      context: ../..
-      dockerfile: frontends/packagerepo/frontend/Dockerfile
-      args:
-        BACKEND_URL: http://packagerepo-backend:5000
-        NEXT_PUBLIC_DBAL_OIDC_BASE_URL: "${NEXT_PUBLIC_DBAL_OIDC_BASE_URL:-/api/dbal}"
-        NEXT_PUBLIC_DBAL_OIDC_CLIENT_ID: packagerepo-web
+    # source is no longer in this tree: it moved out in the micro-repo
+    # split and only a stale untracked copy remains, which must not be
+    # built from. Run the image already on the host.
+    image: metabuilder-deploy-packagerepo
     container_name: metabuilder-packagerepo
     restart: unless-stopped
     environment:
