@@ -823,10 +823,9 @@ services:
 
   # DBAL Frontend - Daemon overview + query console
   dbal-frontend:
-    # source is no longer in this tree: it moved out in the micro-repo
-    # split and only a stale untracked copy remains, which must not be
-    # built from. Run the image already on the host.
-    image: metabuilder-deploy-dbal-frontend
+    build:
+      context: ../..
+      dockerfile: dbal/frontends/dbal/Dockerfile
     container_name: metabuilder-dbal-frontend
     restart: unless-stopped
     environment:
