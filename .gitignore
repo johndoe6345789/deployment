@@ -30,3 +30,7 @@ Thumbs.db
 
 # Playwright CLI session dumps (timestamped scratch output, not config)
 .playwright-cli/
+
+# Python bytecode
+__pycache__/
+*.pyc
