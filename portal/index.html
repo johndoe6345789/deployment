@@ -1,334 +1,735 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/svg+xml" href="/portal/favicon.svg">
-  <title>MetaBuilder</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
-      min-height: 100vh;
-    }
-    header {
-      text-align: center;
-      padding: 3rem 1rem 2rem;
-    }
-    header h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    header p {
-      margin-top: 0.5rem;
-      color: #888;
-      font-size: 1rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1rem 2rem 3rem;
-    }
-    .card {
-      background: #161616;
-      border: 1px solid #262626;
-      border-radius: 10px;
-      padding: 1.5rem;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.2s, transform 0.15s;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .card:hover {
-      border-color: #404040;
-      transform: translateY(-2px);
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .card-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-    .card h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #f0f0f0;
-    }
-    .card p {
-      font-size: 0.875rem;
-      color: #888;
-      line-height: 1.4;
-    }
-    .card .path {
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 0.75rem;
-      color: #555;
-      margin-top: auto;
-      padding-top: 0.5rem;
-    }
-    .section-label {
-      max-width: 1200px;
-      margin: 1.5rem auto 0.25rem;
-      padding: 0 2rem;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #555;
-      font-weight: 600;
-    }
-    .bg-blue    { background: #1e3a5f; }
-    .bg-purple  { background: #3b2667; }
-    .bg-green   { background: #1a3a2a; }
-    .bg-orange  { background: #4a2c1a; }
-    .bg-red     { background: #3a1a1a; }
-    .bg-cyan    { background: #1a3a3a; }
-    .bg-pink    { background: #3a1a2e; }
-    .bg-yellow  { background: #3a3a1a; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/portal/favicon.svg">
+<meta name="color-scheme" content="dark">
+<title>MetaBuilder</title>
+<style>
+  /* ------------------------------------------------------------------
+     MetaBuilder stack portal.
+
+     Colour is information, not decoration: each hue is a *channel*, one
+     per section, and nothing else is tinted. The route path is set as
+     the card's identity line because that is what you actually type,
+     curl, and route on -- it used to be the faintest thing on the card.
+     ------------------------------------------------------------------ */
+
+  :root {
+    /* Ground: blue-black instrument panel, not pure black. */
+    --void:      #0b0f14;
+    --panel:     #131a22;
+    --panel-hi:  #1a242e;
+    --rule:      #223040;
+    --rule-soft: #1a2530;
+
+    --ink:       #dbe5f0;
+    --ink-dim:   #7d8fa1;
+    --ink-faint: #4c5c6c;
+
+    /* One channel per section. */
+    --ch-app: #4cc2ff;
+    --ch-svc: #a78bfa;
+    --ch-adm: #f0a868;
+    --ch-mon: #4ade80;
+
+    --up:      #34d399;
+    --down:    #f87171;
+    --waiting: #fbbf24;
+
+    --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+    --shell: 1240px;
+    --gutter: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: var(--shell);
+    margin: 0 auto;
+    padding-inline: var(--gutter);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  :focus-visible {
+    outline: 2px solid var(--ch-app);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* ---- Masthead --------------------------------------------------- */
+
+  .masthead {
+    padding: clamp(2.5rem, 7vw, 4.5rem) 0 clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .masthead-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  /* The wordmark is set in the stack's own vernacular -- mono, lowercase,
+     tight -- with a block cursor for a mark. */
+  .wordmark {
+    font-family: var(--mono);
+    font-size: clamp(1.5rem, 4.2vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.28em;
+  }
+
+  .wordmark .caret {
+    width: 0.42em;
+    height: 0.86em;
+    background: var(--ch-app);
+    border-radius: 1px;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--ch-app) 55%, transparent);
+  }
+
+  .tagline {
+    margin-top: 0.6rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+
+  /* Live tally -- the first thing the page should tell you. */
+  .tally {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding-bottom: 0.35rem;
+  }
+
+  .tally-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  .tally-num {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+    transition: color 400ms ease;
+  }
+
+  .tally-item[data-kind="up"] .tally-num   { color: var(--up); }
+  .tally-item[data-kind="down"] .tally-num { color: var(--down); }
+  .tally-item[data-kind="down"][data-zero="true"] .tally-num { color: var(--ink-faint); }
+
+  /* The bus bar: all four channels in one line, tying the sections
+     together as a single system. */
+  .busbar {
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--ch-app) 0%, var(--ch-app) 25%,
+      var(--ch-svc) 25%, var(--ch-svc) 50%,
+      var(--ch-adm) 50%, var(--ch-adm) 75%,
+      var(--ch-mon) 75%, var(--ch-mon) 100%
+    );
+    opacity: 0.55;
+  }
+
+  /* ---- Section ---------------------------------------------------- */
+
+  .rack { padding-top: clamp(2rem, 4vw, 3rem); }
+  .rack:last-of-type { padding-bottom: clamp(3rem, 7vw, 5rem); }
+
+  .rack-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .rack-name {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--channel);
+  }
+
+  .rack-flag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+  }
+
+  .rack-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--channel) 45%, transparent),
+      var(--rule-soft) 60%,
+      transparent);
+  }
+
+  .rack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    gap: 0.85rem;
+  }
+
+  /* ---- Module card ------------------------------------------------ */
+
+  .mod {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.15rem 1.25rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--rule-soft);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+  }
+
+  /* Channel rail, revealed on approach. */
+  .mod::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--channel);
+    transform: scaleY(0);
+    transform-origin: 50% 0;
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mod:hover,
+  .mod:focus-visible {
+    background: var(--panel-hi);
+    border-color: var(--rule);
+    transform: translateY(-2px);
+  }
+
+  .mod:hover::before,
+  .mod:focus-visible::before { transform: scaleY(1); }
+
+  .mod-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .mod-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding-inline: 7px;
+    border-radius: 9px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--channel);
+    background: color-mix(in srgb, var(--channel) 13%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--channel) 22%, transparent);
+  }
+
+  .mod-name {
+    font-size: 1rem;
+    font-weight: 620;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .mod-desc {
+    font-size: 0.83rem;
+    line-height: 1.5;
+    color: var(--ink-dim);
+  }
+
+  /* The route is the card's identity line, not a footnote. */
+  .mod-path {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--mono);
+    font-size: 0.79rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink-dim);
+    transition: color 180ms ease;
+  }
+
+  .mod:hover .mod-path { color: var(--channel); }
+
+  /* ---- Reachability ----------------------------------------------- */
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .state .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .state .label { display: none; }
+  .state[data-state="down"] .label,
+  .state[data-state="external"] .label { display: inline; }
+
+  .state[data-state="waiting"] { color: var(--waiting); }
+  .state[data-state="up"]      { color: var(--up); }
+  .state[data-state="down"]    { color: var(--down); }
+  .state[data-state="external"]{ color: var(--ink-faint); }
+
+  .state[data-state="waiting"] .dot { animation: breathe 1.4s ease-in-out infinite; }
+  .state[data-state="up"] .dot {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--up) 18%, transparent);
+  }
+  .state[data-state="down"] .dot {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--down) 18%, transparent);
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 1; }
+  }
+
+  /* Cards arrive as their section resolves. */
+  .mod {
+    opacity: 0;
+    animation: settle 420ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .mod { opacity: 1; }
+    .mod::before { transform: scaleY(1); }
+  }
+
+  @media (max-width: 560px) {
+    .masthead-row { align-items: flex-start; }
+    .tally { gap: 1.1rem; }
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>MetaBuilder</h1>
-    <p>Development Stack Portal</p>
-  </header>
 
-  <div class="section-label">Applications</div>
-  <div class="grid">
-    <a href="/app" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-yellow">A</div>
-        <h2>Frontend App</h2>
+<header class="masthead">
+  <div class="shell">
+    <div class="masthead-row">
+      <div>
+        <div class="wordmark">metabuilder<span class="caret" aria-hidden="true"></span></div>
+        <p class="tagline">Development stack portal</p>
       </div>
-      <p>Main Next.js application with five-level access control, multi-tenant routing, DBAL SSO, and the God Panel builder.</p>
-      <div class="path">/app</div>
-    </a>
-
-    <a href="/workflowui" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-blue">W</div>
-        <h2>WorkflowUI</h2>
+      <div class="tally" role="status" aria-live="polite" aria-label="Stack reachability">
+        <span class="tally-item" data-kind="up">
+          <span class="tally-num" id="count-up">&mdash;</span> reachable
+        </span>
+        <span class="tally-item" data-kind="down" data-zero="true">
+          <span class="tally-num" id="count-down">&mdash;</span> unreachable
+        </span>
       </div>
-      <p>Visual workflow editor with n8n-style DAG canvas, step library, and JSON workflow execution.</p>
-      <div class="path">/workflowui</div>
-    </a>
-
-    <a href="/codegen" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-purple">C</div>
-        <h2>CodeForge IDE</h2>
-      </div>
-      <p>Low-code application builder with Monaco editor, JSON-driven component architecture.</p>
-      <div class="path">/codegen</div>
-    </a>
-
-    <a href="/pastebin" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-green">P</div>
-        <h2>Pastebin</h2>
-      </div>
-      <p>Code snippet sharing with syntax highlighting, expiration, and privacy controls.</p>
-      <div class="path">/pastebin</div>
-    </a>
-
-    <a href="/emailclient" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-orange">E</div>
-        <h2>Email Client</h2>
-      </div>
-      <p>Full-featured email management with IMAP/SMTP, multi-account support, and search.</p>
-      <div class="path">/emailclient</div>
-    </a>
-
-    <a href="/postgres" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-cyan">D</div>
-        <h2>Postgres Dashboard</h2>
-      </div>
-      <p>PostgreSQL admin dashboard with query editor, table browser, and performance monitoring.</p>
-      <div class="path">/postgres</div>
-    </a>
-
-    <a href="/diagrams" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-pink">3D</div>
-        <h2>Exploded Diagrams</h2>
-      </div>
-      <p>Interactive 3D exploded diagram viewer with Three.js and JSCAD integration.</p>
-      <div class="path">/diagrams</div>
-    </a>
-
-    <a href="/storybook" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-red">S</div>
-        <h2>Storybook</h2>
-      </div>
-      <p>Component library preview with interactive props, documentation, and visual testing.</p>
-      <div class="path">/storybook</div>
-    </a>
-
-    <a href="/dbal" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-blue">DB</div>
-        <h2>DBAL Frontend</h2>
-      </div>
-      <p>Daemon overview, architecture docs, server status, and interactive REST query console.</p>
-      <div class="path">/dbal</div>
-    </a>
-
-    <a href="/terminal" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-green">DT</div>
-        <h2>Docker Terminal</h2>
-      </div>
-      <p>Interactive web terminal for Docker containers with real-time status monitoring.</p>
-      <div class="path">/terminal</div>
-    </a>
-
-    <a href="/packagerepo" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-purple">PR</div>
-        <h2>Package Repo</h2>
-      </div>
-      <p>Schema-driven package repository with content-addressed storage and admin interface.</p>
-      <div class="path">/packagerepo</div>
-    </a>
-
-    <a href="/repoforge" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-cyan">RF</div>
-        <h2>RepoForge</h2>
-      </div>
-      <p>Mobile Git repository manager for GitHub and GitLab. Download the Android APK.</p>
-      <div class="path">/repoforge</div>
-    </a>
-
-    <a href="/caproverforge" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-orange">CF</div>
-        <h2>CaproverForge</h2>
-      </div>
-      <p>Mobile admin panel for CapRover. Deploy apps and manage domains from your phone.</p>
-      <div class="path">/caproverforge</div>
-    </a>
+    </div>
   </div>
+</header>
 
-  <div class="section-label">Backend Services</div>
-  <div class="grid">
-    <a href="/api/health" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-blue">API</div>
-        <h2>DBAL API</h2>
-      </div>
-      <p>C++ database abstraction layer with RESTful CRUD, caching, and search.</p>
-      <div class="path">/api</div>
-    </a>
+<div class="shell"><div class="busbar"></div></div>
 
-    <a href="/email-api/health" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-orange">EM</div>
-        <h2>Email Service</h2>
-      </div>
-      <p>Flask backend for IMAP/SMTP operations, email sync, and Celery task queue.</p>
-      <div class="path">/email-api</div>
-    </a>
+<main class="shell">
 
-    <a href="http://localhost:8025" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-green">SM</div>
-        <h2>SMTP Relay</h2>
-      </div>
-      <p>Twisted SMTP relay dashboard for email testing and debugging.</p>
-      <div class="path">localhost:8025</div>
-    </a>
-  </div>
+  <!-- ============================ Applications -->
+  <section class="rack" style="--channel: var(--ch-app)">
+    <div class="rack-head">
+      <h2 class="rack-name">Applications</h2>
+      <span class="rack-line"></span>
+    </div>
+    <div class="rack-grid">
 
-  <div class="section-label">Administration</div>
-  <div class="grid">
-    <a href="/portal/settings.html" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-purple">&#x2699;</div>
-        <h2>Database Settings</h2>
-      </div>
-      <p>Manage DBAL adapter configuration, switch backends, and test database connections.</p>
-      <div class="path">/portal/settings.html</div>
-    </a>
+      <a class="mod" href="/app" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">A</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Frontend App</h3>
+        <p class="mod-desc">Main Next.js application with five-level access control, multi-tenant routing, DBAL SSO, and the God Panel builder.</p>
+        <div class="mod-path">/app</div>
+      </a>
 
-    <a href="/phpmyadmin/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-orange">PMA</div>
-        <h2>phpMyAdmin</h2>
-      </div>
-      <p>MySQL web administration with table browser, SQL editor, import/export, and user management.</p>
-      <div class="path">/phpmyadmin/</div>
-    </a>
+      <a class="mod" href="/workflowui" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">W</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">WorkflowUI</h3>
+        <p class="mod-desc">Visual workflow editor with n8n-style DAG canvas, step library, and JSON workflow execution.</p>
+        <div class="mod-path">/workflowui</div>
+      </a>
 
-    <a href="/mongo-express/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-green">ME</div>
-        <h2>Mongo Express</h2>
-      </div>
-      <p>MongoDB web administration with collection browser, document editor, and query interface.</p>
-      <div class="path">/mongo-express/</div>
-    </a>
+      <a class="mod" href="/codegen" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">C</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">CodeForge IDE</h3>
+        <p class="mod-desc">Low-code application builder with Monaco editor, JSON-driven component architecture.</p>
+        <div class="mod-path">/codegen</div>
+      </a>
 
-    <a href="/redis-insight/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-red">RI</div>
-        <h2>RedisInsight</h2>
-      </div>
-      <p>Redis GUI with key browser, CLI console, memory analysis, and slow log inspection.</p>
-      <div class="path">/redis-insight/</div>
-    </a>
+      <a class="mod" href="/pastebin" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">P</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Pastebin</h3>
+        <p class="mod-desc">Code snippet sharing with syntax highlighting, expiration, and privacy controls.</p>
+        <div class="mod-path">/pastebin</div>
+      </a>
 
-    <a href="/kibana/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-yellow">KB</div>
-        <h2>Kibana</h2>
-      </div>
-      <p>Elasticsearch dashboard with Discover, index management, Dev Tools console, and visualizations.</p>
-      <div class="path">/kibana/</div>
-    </a>
-  </div>
+      <a class="mod" href="/emailclient" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">E</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Email Client</h3>
+        <p class="mod-desc">Full-featured email management with IMAP/SMTP, multi-account support, and search.</p>
+        <div class="mod-path">/emailclient</div>
+      </a>
 
-  <div class="section-label">Monitoring (--profile monitoring)</div>
-  <div class="grid">
-    <a href="/grafana/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-orange">GF</div>
-        <h2>Grafana</h2>
-      </div>
-      <p>Metrics visualization with DBAL, infrastructure, and Starlink dashboards.</p>
-      <div class="path">/grafana/</div>
-    </a>
+      <a class="mod" href="/postgres" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">D</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Postgres Dashboard</h3>
+        <p class="mod-desc">PostgreSQL admin dashboard with query editor, table browser, and performance monitoring.</p>
+        <div class="mod-path">/postgres</div>
+      </a>
 
-    <a href="/prometheus/" class="card">
-      <div class="card-header">
-        <div class="card-icon bg-red">PM</div>
-        <h2>Prometheus</h2>
-      </div>
-      <p>Metrics collection, alerting rules, and target status for all MetaBuilder services.</p>
-      <div class="path">/prometheus/</div>
-    </a>
-  </div>
+      <a class="mod" href="/diagrams" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">3D</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Exploded Diagrams</h3>
+        <p class="mod-desc">Interactive 3D exploded diagram viewer with Three.js and JSCAD integration.</p>
+        <div class="mod-path">/diagrams</div>
+      </a>
+
+      <a class="mod" href="/storybook" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">S</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Storybook</h3>
+        <p class="mod-desc">Component library preview with interactive props, documentation, and visual testing.</p>
+        <div class="mod-path">/storybook</div>
+      </a>
+
+      <a class="mod" href="/dbal" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">DB</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">DBAL Frontend</h3>
+        <p class="mod-desc">Daemon overview, architecture docs, server status, and interactive REST query console.</p>
+        <div class="mod-path">/dbal</div>
+      </a>
+
+      <a class="mod" href="/terminal" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">DT</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Docker Terminal</h3>
+        <p class="mod-desc">Interactive web terminal for Docker containers with real-time status monitoring.</p>
+        <div class="mod-path">/terminal</div>
+      </a>
+
+      <a class="mod" href="/packagerepo" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">PR</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Package Repo</h3>
+        <p class="mod-desc">Schema-driven package repository with content-addressed storage and admin interface.</p>
+        <div class="mod-path">/packagerepo</div>
+      </a>
+
+      <a class="mod" href="/repoforge" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">RF</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">RepoForge</h3>
+        <p class="mod-desc">Mobile Git repository manager for GitHub and GitLab. Download the Android APK.</p>
+        <div class="mod-path">/repoforge</div>
+      </a>
+
+      <a class="mod" href="/caproverforge" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">CF</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">CaproverForge</h3>
+        <p class="mod-desc">Mobile admin panel for CapRover. Deploy apps and manage domains from your phone.</p>
+        <div class="mod-path">/caproverforge</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ============================ Backend services -->
+  <section class="rack" style="--channel: var(--ch-svc)">
+    <div class="rack-head">
+      <h2 class="rack-name">Backend services</h2>
+      <span class="rack-line"></span>
+    </div>
+    <div class="rack-grid">
+
+      <a class="mod" href="/api/health" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">API</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">DBAL API</h3>
+        <p class="mod-desc">C++ database abstraction layer with RESTful CRUD, caching, and search.</p>
+        <div class="mod-path">/api</div>
+      </a>
+
+      <a class="mod" href="/email-api/health" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">EM</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Email Service</h3>
+        <p class="mod-desc">Flask backend for IMAP/SMTP operations, email sync, and Celery task queue.</p>
+        <div class="mod-path">/email-api</div>
+      </a>
+
+      <a class="mod" href="http://localhost:8025">
+        <div class="mod-top">
+          <span class="mod-tag">SM</span>
+          <span class="state" data-state="external"><span class="dot"></span><span class="label">host only</span></span>
+        </div>
+        <h3 class="mod-name">SMTP Relay</h3>
+        <p class="mod-desc">Twisted SMTP relay dashboard for email testing and debugging. Reachable from the Docker host, not through the gateway.</p>
+        <div class="mod-path">localhost:8025</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ============================ Administration -->
+  <section class="rack" style="--channel: var(--ch-adm)">
+    <div class="rack-head">
+      <h2 class="rack-name">Administration</h2>
+      <span class="rack-line"></span>
+    </div>
+    <div class="rack-grid">
+
+      <a class="mod" href="/portal/settings.html" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">CFG</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Database Settings</h3>
+        <p class="mod-desc">Manage DBAL adapter configuration, switch backends, and test database connections.</p>
+        <div class="mod-path">/portal/settings.html</div>
+      </a>
+
+      <a class="mod" href="/phpmyadmin/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">PMA</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">phpMyAdmin</h3>
+        <p class="mod-desc">MySQL web administration with table browser, SQL editor, import/export, and user management.</p>
+        <div class="mod-path">/phpmyadmin/</div>
+      </a>
+
+      <a class="mod" href="/mongo-express/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">ME</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Mongo Express</h3>
+        <p class="mod-desc">MongoDB web administration with collection browser, document editor, and query interface.</p>
+        <div class="mod-path">/mongo-express/</div>
+      </a>
+
+      <a class="mod" href="/redis-insight/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">RI</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">RedisInsight</h3>
+        <p class="mod-desc">Redis GUI with key browser, CLI console, memory analysis, and slow log inspection.</p>
+        <div class="mod-path">/redis-insight/</div>
+      </a>
+
+      <a class="mod" href="/kibana/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">KB</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Kibana</h3>
+        <p class="mod-desc">Elasticsearch dashboard with Discover, index management, Dev Tools console, and visualizations.</p>
+        <div class="mod-path">/kibana/</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ============================ Monitoring -->
+  <section class="rack" style="--channel: var(--ch-mon)">
+    <div class="rack-head">
+      <h2 class="rack-name">Monitoring</h2>
+      <span class="rack-flag">--profile monitoring</span>
+      <span class="rack-line"></span>
+    </div>
+    <div class="rack-grid">
+
+      <a class="mod" href="/grafana/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">GF</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Grafana</h3>
+        <p class="mod-desc">Metrics visualization with DBAL, infrastructure, and Starlink dashboards.</p>
+        <div class="mod-path">/grafana/</div>
+      </a>
+
+      <a class="mod" href="/prometheus/" data-probe>
+        <div class="mod-top">
+          <span class="mod-tag">PM</span>
+          <span class="state" data-state="waiting" aria-label="checking" title="checking"><span class="dot"></span><span class="label"></span></span>
+        </div>
+        <h3 class="mod-name">Prometheus</h3>
+        <p class="mod-desc">Metrics collection, alerting rules, and target status for all MetaBuilder services.</p>
+        <div class="mod-path">/prometheus/</div>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.mod'));
+
+  // Stagger the arrival so each rack reads as one group settling in.
+  cards.forEach(function (card, i) {
+    card.style.setProperty('--delay', Math.min(i * 22, 420) + 'ms');
+  });
+
+  var upEl = document.getElementById('count-up');
+  var downEl = document.getElementById('count-down');
+  var downItem = downEl.closest('.tally-item');
+  var up = 0, down = 0;
+
+  function render() {
+    upEl.textContent = String(up);
+    downEl.textContent = String(down);
+    downItem.setAttribute('data-zero', down === 0 ? 'true' : 'false');
+  }
+
+  function mark(card, state, label) {
+    var el = card.querySelector('.state');
+    el.setAttribute('data-state', state);
+    el.querySelector('.label').textContent = label;
+    el.setAttribute('title', label);
+    el.setAttribute('aria-label', label);
+    if (state === 'up') { up++; } else if (state === 'down') { down++; }
+    render();
+  }
+
+  // A service is reachable if the gateway got an answer out of it. A
+  // gateway-level 5xx means nginx is up but the container behind it is
+  // not, so that counts as down; 401/403/404 still prove something is
+  // listening.
+  function probe(card) {
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, 6000);
+
+    return fetch(card.getAttribute('href'), {
+      method: 'HEAD',
+      signal: ctl.signal,
+      redirect: 'follow',
+      cache: 'no-store'
+    }).then(function (res) {
+      clearTimeout(timer);
+      var dead = res.status === 502 || res.status === 503 || res.status === 504;
+      mark(card, dead ? 'down' : 'up', dead ? 'no answer' : 'reachable');
+    }).catch(function () {
+      clearTimeout(timer);
+      mark(card, 'down', 'no answer');
+    });
+  }
+
+  // Six at a time: enough to feel instant, gentle on a home server.
+  var queue = cards.filter(function (c) { return c.hasAttribute('data-probe'); });
+  var cursor = 0;
+
+  function pump() {
+    if (cursor >= queue.length) { return; }
+    probe(queue[cursor++]).then(pump);
+  }
+
+  render();
+  for (var w = 0; w < 6; w++) { pump(); }
+})();
+</script>
+
 </body>
 </html>
