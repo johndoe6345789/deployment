@@ -698,6 +698,13 @@
   // gateway-level 5xx means nginx is up but the container behind it is
   // not, so that counts as down; 401/403/404 still prove something is
   // listening.
+  //
+  // Redirects are not followed. A 3xx already proves the service answered,
+  // and following it can fail for reasons that say nothing about health --
+  // /storybook 301s to an absolute http:// URL, which the browser blocks as
+  // mixed content on this HTTPS page and which used to read as an outage.
+  // redirect:'manual' surfaces those as an opaque redirect: status 0, but
+  // an answer all the same.
   function probe(card) {
     var ctl = new AbortController();
     var timer = setTimeout(function () { ctl.abort(); }, 6000);
@@ -705,11 +712,13 @@
     return fetch(card.getAttribute('href'), {
       method: 'HEAD',
       signal: ctl.signal,
-      redirect: 'follow',
+      redirect: 'manual',
       cache: 'no-store'
     }).then(function (res) {
       clearTimeout(timer);
-      var dead = res.status === 502 || res.status === 503 || res.status === 504;
+      var redirected = res.type === 'opaqueredirect' || res.status === 0;
+      var dead = !redirected &&
+        (res.status === 502 || res.status === 503 || res.status === 504);
       mark(card, dead ? 'down' : 'up', dead ? 'no answer' : 'reachable');
     }).catch(function () {
       clearTimeout(timer);
