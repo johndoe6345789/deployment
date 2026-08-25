@@ -8,9 +8,15 @@ from cli.helpers import (
     container_health, docker_compose, get_buildable_services, log_err,
     log_warn, resolve_services, run as run_proc,
 )
+from cli.workspace_check import check_workspace
 
 
 def run_cmd(args: argparse.Namespace, config: dict) -> int:
+    # The libraries this build compiles against are mounted in and gitignored,
+    # so a stale tree would otherwise sail through as a green deploy.
+    if not check_workspace(strict=not getattr(args, "skip_workspace_check", False)):
+        return 1
+
     buildable = get_buildable_services()
     targets = buildable if args.all else args.apps
     if not targets:
