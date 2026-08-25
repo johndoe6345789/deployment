@@ -531,6 +531,21 @@
           "arguments": []
         }
       }
+    },
+    "migrate": {
+      "help": "Apply SQL migrations (foreign keys, indexes, dropped columns)",
+      "module": "cli.migrate",
+      "arguments": [
+        {
+          "name": "--dry-run",
+          "action": "store_true",
+          "help": "List what would run without changing anything"
+        },
+        {
+          "name": "--container",
+          "help": "Postgres container name (default metabuilder-postgres)"
+        }
+      ]
     }
   }
 }

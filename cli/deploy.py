@@ -9,6 +9,7 @@ from cli.helpers import (
     log_warn, resolve_services, run as run_proc,
 )
 from cli.workspace_check import check_workspace
+from cli.migrate import run_cmd as run_migrations
 
 
 def run_cmd(args: argparse.Namespace, config: dict) -> int:
@@ -72,11 +73,23 @@ def run_cmd(args: argparse.Namespace, config: dict) -> int:
             all_healthy = False
 
     print()
-    if all_healthy:
-        print(f"{GREEN}All services deployed and healthy{NC}")
-    else:
+    if not all_healthy:
         log_warn(f"Some services not healthy — check: docker compose -f {COMPOSE_FILE} ps")
-    return 0 if all_healthy else 1
+        return 1
+
+    print(f"{GREEN}All services deployed and healthy{NC}")
+
+    # Foreign keys, index changes and dropped columns are not something an
+    # entity schema can express, so they arrive here instead. Run once the
+    # database is actually up.
+    migrated = run_migrations(
+        argparse.Namespace(dry_run=False, container=None), config
+    )
+    if migrated != 0:
+        log_err("migrations failed; the stack is up but its schema is behind")
+        return 1
+
+    return 0
 
 
 run = run_cmd
