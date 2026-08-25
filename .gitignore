@@ -12,6 +12,10 @@ config/nginx/ssl/*.crt
 
 # Backup files
 *.sql
+# ...except migrations. These are the schema: DBAL's create-table template
+# emits columns only, so foreign keys, index changes and dropped columns
+# live here and nowhere else. Ignoring them loses the database's shape.
+!migrations/*.sql
 *.dump
 backups/
 
