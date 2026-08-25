@@ -1,10 +1,15 @@
-"""Apply SQL migrations that the entity schemas cannot express.
+"""Apply the SQL migrations that live with the DBAL schemas.
 
 DBAL builds each table from its entity definition, but its create-table
 template emits columns only. Foreign keys and indexes an entity declares are
-never created, and a column it stops declaring is never dropped. Those gaps
-are what these files close, so a database rebuilt from scratch ends up
+never created, and a column it stops declaring is never dropped. The
+migrations close those gaps, so a database rebuilt from scratch ends up
 matching one that has been running.
+
+They belong to DBAL, not to the deployer -- they describe DBAL's tables and
+change when its entities do, so they sit beside the schemas in the dbal repo.
+Only the running of them lives here, because that needs to know about
+containers.
 
 Each file runs once, inside a transaction, and is recorded in
 schema_migrations. Files are applied in filename order, so they are named
@@ -19,10 +24,13 @@ import subprocess
 from pathlib import Path
 
 from cli.helpers import (
-    BLUE, GREEN, NC, YELLOW, SCRIPT_DIR, log_err, log_ok, log_warn,
+    BLUE, GREEN, NC, YELLOW, PROJECT_ROOT, log_err, log_ok, log_warn,
 )
 
-MIGRATIONS_DIR = SCRIPT_DIR / "migrations"
+# Beside the entity schemas they complete, in the sibling dbal checkout.
+MIGRATIONS_DIR = (
+    PROJECT_ROOT / "dbal" / "libraries" / "dbal" / "shared" / "api" / "schema" / "migrations"
+)
 POSTGRES_CONTAINER = "metabuilder-postgres"
 
 LEDGER = """
@@ -64,6 +72,12 @@ def _applied(container: str) -> dict[str, str]:
 
 def run_cmd(args: argparse.Namespace, config: dict) -> int:
     container = getattr(args, "container", None) or POSTGRES_CONTAINER
+    if not MIGRATIONS_DIR.is_dir():
+        # The dbal checkout is a sibling; without it there is nothing to apply
+        # and no way to tell whether that is correct.
+        log_warn(f"no dbal checkout at {MIGRATIONS_DIR}; skipping migrations")
+        return 0
+
     files = sorted(MIGRATIONS_DIR.glob("*.sql"))
     if not files:
         log_warn(f"no migrations in {MIGRATIONS_DIR}")
