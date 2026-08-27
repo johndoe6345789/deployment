@@ -390,13 +390,6 @@ services:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
       NODE_ENV: production
       PORT: 3000
-      # The blob store is in-network only; the app proxies what a browser may
-      # see, so these credentials stay server-side. They match the key seeded
-      # in object-store's migrations/002_seed_data.sql, which reads them from
-      # a table rather than its own environment.
-      OBJECT_STORE_URL: http://object-store:9000
-      OBJECT_STORE_ACCESS_KEY: ${OBJECT_STORE_ACCESS_KEY:-minioadmin}
-      OBJECT_STORE_SECRET_KEY: ${OBJECT_STORE_SECRET_KEY:-minioadmin}
       DBAL_ENDPOINT: http://dbal:8080
     depends_on:
       dbal:
@@ -802,6 +795,13 @@ services:
       - path: ../../../jenkins/secrets/vault.env
         required: false
     environment:
+      # The blob store is in-network only; the app proxies what a browser may
+      # see, so these credentials stay server-side. They match the key seeded
+      # in object-store's migrations/002_seed_data.sql, which reads them from
+      # a table rather than its own environment.
+      OBJECT_STORE_URL: http://object-store:9000
+      OBJECT_STORE_ACCESS_KEY: ${OBJECT_STORE_ACCESS_KEY:-minioadmin}
+      OBJECT_STORE_SECRET_KEY: ${OBJECT_STORE_SECRET_KEY:-minioadmin}
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: "0.0.0.0"
@@ -1576,6 +1576,14 @@ services:
       PGUSER: ${POSTGRES_USER:-metabuilder}
       PGPASSWORD: ${POSTGRES_PASSWORD:-metabuilder}
       PGDATABASE: objectstore
+      # The PG* pair above is for the entrypoint's psql migrations only. The
+      # server itself reads S3_DB_CONN and otherwise falls back to
+      # host=localhost dbname=s3server -- which resolves to nothing in the
+      # container, so every query that touches the database hangs while
+      # /health, which touches nothing, keeps answering.
+      S3_DB_CONN: >-
+        host=postgres port=5432 dbname=objectstore
+        user=${POSTGRES_USER:-metabuilder} password=${POSTGRES_PASSWORD:-metabuilder}
       S3_PORT: 9000
       S3_DATA_DIR: /data/s3
     volumes:
