@@ -1526,6 +1526,65 @@ services:
 # ============================================================================
 # Volumes
 # ============================================================================
+  # ------------------------------------------------------------------------
+  # object-store -- the homegrown S3-compatible blob store.
+  #
+  # Structured data stays in DBAL; this is for blobs (logos, uploads, media)
+  # that have no business in a Postgres text column. It keeps its own database
+  # rather than sharing metabuilder's: its tables are lowercase (buckets,
+  # objects, api_keys) and DBAL's are quoted PascalCase, so nothing would
+  # collide today, but "objects" is a name worth not gambling on.
+  #
+  # Not published through nginx. The app reaches it in-network and proxies
+  # what a browser is allowed to see, so the AWS-style credentials never leave
+  # the server and the store itself is never internet-facing.
+  object-store-init:
+    image: postgres:16-alpine
+    container_name: metabuilder-object-store-init
+    restart: "no"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-metabuilder}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until pg_isready -h postgres -U ${POSTGRES_USER:-metabuilder} -q; do sleep 1; done
+        psql -h postgres -U ${POSTGRES_USER:-metabuilder} -d postgres -tc \
+          "SELECT 1 FROM pg_database WHERE datname = 'objectstore'" | grep -q 1 || \
+          psql -h postgres -U ${POSTGRES_USER:-metabuilder} -d postgres -c "CREATE DATABASE objectstore"
+        echo "objectstore database ready"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - metabuilder
+
+  object-store:
+    image: ghcr.io/johndoe6345789/object-store:latest
+    container_name: metabuilder-object-store
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-metabuilder}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-metabuilder}
+      PGDATABASE: objectstore
+      S3_PORT: 9000
+      S3_DATA_DIR: /data/s3
+    volumes:
+      - object-store-blobs:/data/s3
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      object-store-init:
+        condition: service_completed_successfully
+    networks:
+      - metabuilder
+
 volumes:
   # eero Exporter session storage
   eero-exporter-config:
@@ -1603,6 +1662,8 @@ volumes:
   packagerepo-minio-data:
     driver: local
   # Registry
+  object-store-blobs:
+    name: object-store-blobs
   nexus-data:
     name: nexus-data
   artifactory-data:
