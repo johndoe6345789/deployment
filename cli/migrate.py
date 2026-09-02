@@ -28,9 +28,11 @@ from cli.helpers import (
 )
 
 # Beside the entity schemas they complete, in the sibling dbal checkout.
+DBAL_ROOT = PROJECT_ROOT / "dbal"
 MIGRATIONS_DIR = (
-    PROJECT_ROOT / "dbal" / "libraries" / "dbal" / "shared" / "api" / "schema" / "migrations"
+    DBAL_ROOT / "libraries" / "dbal" / "shared" / "api" / "schema" / "migrations"
 )
+DBAL_REMOTE = "https://github.com/johndoe6345789/dbal.git"
 POSTGRES_CONTAINER = "metabuilder-postgres"
 
 LEDGER = """
@@ -70,8 +72,51 @@ def _applied(container: str) -> dict[str, str]:
     return out
 
 
+def _sync_dbal_checkout() -> None:
+    """Keep the sibling dbal checkout current.
+
+    Nothing else in this repo touches DBAL_ROOT -- it exists solely so this
+    file has migrations to read -- so it is this file's job to keep it
+    fresh. Without this, a migration added to dbal sits here unseen no
+    matter how many times a deploy runs: found live, when a migration
+    fixing PageConfig's tenant-scoped uniqueness had already landed on
+    dbal's main but three consecutive deploys kept reporting the same
+    single pre-existing migration file, because DBAL_ROOT was a one-time
+    clone from long before this deploy pipeline existed and nothing had
+    ever pulled it since.
+
+    Best-effort: a network hiccup here should not fail a deploy over an
+    informational sibling checkout, so failures are warned and swallowed --
+    the run then proceeds against whatever is already on disk, same as if
+    this function did not exist.
+    """
+    if not DBAL_ROOT.is_dir():
+        result = subprocess.run(
+            ["git", "clone", "--quiet", DBAL_REMOTE, str(DBAL_ROOT)],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            log_warn(f"could not clone dbal into {DBAL_ROOT}: {result.stderr.strip()}")
+        return
+
+    fetch = subprocess.run(
+        ["git", "-C", str(DBAL_ROOT), "fetch", "--quiet", "origin", "main"],
+        capture_output=True, text=True,
+    )
+    if fetch.returncode != 0:
+        log_warn(f"could not update dbal checkout at {DBAL_ROOT}: {fetch.stderr.strip()}")
+        return
+    reset = subprocess.run(
+        ["git", "-C", str(DBAL_ROOT), "reset", "--quiet", "--hard", "origin/main"],
+        capture_output=True, text=True,
+    )
+    if reset.returncode != 0:
+        log_warn(f"could not update dbal checkout at {DBAL_ROOT}: {reset.stderr.strip()}")
+
+
 def run_cmd(args: argparse.Namespace, config: dict) -> int:
     container = getattr(args, "container", None) or POSTGRES_CONTAINER
+    _sync_dbal_checkout()
     if not MIGRATIONS_DIR.is_dir():
         # The dbal checkout is a sibling; without it there is nothing to apply
         # and no way to tell whether that is correct.
