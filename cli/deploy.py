@@ -5,8 +5,9 @@ import sys
 import time
 from cli.helpers import (
     COMPOSE_FILE, GREEN, RED, YELLOW, BLUE, NC,
-    container_health, docker_compose, get_buildable_services, log_err,
-    log_warn, resolve_services, run as run_proc,
+    container_health, docker_compose, get_buildable_services,
+    get_refreshable_services, log_err, log_warn, resolve_services,
+    run as run_proc,
 )
 from cli.workspace_check import check_workspace
 from cli.migrate import run_cmd as run_migrations
@@ -42,8 +43,23 @@ def run_cmd(args: argparse.Namespace, config: dict) -> int:
         return 1
 
     # Step 2: Deploy
+    #
+    # --all also refreshes the first-party images this stack pulls rather
+    # than builds. Without it a change to one of those repos publishes a new
+    # :latest and never arrives: compose keeps the image already on the host,
+    # so the deploy is green and the code is old.
+    deploying = list(services)
+    if args.all:
+        refreshable = get_refreshable_services()
+        if refreshable:
+            print(f"  refreshing pulled images: {', '.join(refreshable)}")
+            pull = run_proc(docker_compose("pull", *refreshable))
+            if pull.returncode != 0:
+                log_warn("Could not pull one or more images; using what is on the host")
+            deploying += refreshable
+
     print(f"\n{YELLOW}[2/3] Deploying...{NC}")
-    result = run_proc(docker_compose("up", "-d", "--force-recreate", *services))
+    result = run_proc(docker_compose("up", "-d", "--force-recreate", *deploying))
     if result.returncode != 0:
         log_err("Deploy failed")
         return 1
@@ -51,7 +67,7 @@ def run_cmd(args: argparse.Namespace, config: dict) -> int:
     # Step 3: Health check
     print(f"\n{YELLOW}[3/3] Waiting for health checks...{NC}")
     all_healthy = True
-    for svc in services:
+    for svc in deploying:
         container = f"metabuilder-{svc}"
         sys.stdout.write(f"  {svc}: ")
         sys.stdout.flush()

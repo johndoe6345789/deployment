@@ -187,6 +187,32 @@ def get_buildable_services() -> list[str]:
     ]
 
 
+# Images this org publishes, as opposed to postgres/redis/grafana. Only
+# these are chased on deploy: a third-party tag is pinned deliberately and
+# following it would recreate databases on an unrelated app's deploy.
+FIRST_PARTY_REGISTRY = "ghcr.io/johndoe6345789/"
+
+
+def get_refreshable_services() -> list[str]:
+    """First-party services that come from the registry rather than a build.
+
+    `deploy` only ever touched services with a build: section, so a service
+    pinned to an image tag -- dbal, pulled from GHCR -- could never be
+    refreshed by deploying: compose leaves an already-present :latest alone.
+    A change to one of those repos went green in its own CI, published a new
+    image, and still never reached production.
+    """
+    import yaml
+    with open(COMPOSE_FILE) as f:
+        compose = yaml.safe_load(f)
+    return [
+        name for name, svc in compose.get("services", {}).items()
+        if isinstance(svc, dict)
+        and "build" not in svc
+        and str(svc.get("image", "")).startswith(FIRST_PARTY_REGISTRY)
+    ]
+
+
 def resolve_services(targets: list[str], config: dict) -> list[str] | None:
     """Validate compose service names against the compose file. Returns None on error."""
     buildable = get_buildable_services()
